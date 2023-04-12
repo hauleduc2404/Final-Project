@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id               BigInt           @id @default(autoincrement())
+  title            String           @db.VarChar(255)
+  slug             String           @unique @db.VarChar(255)
+  description      String?          @db.VarChar(255)
+  courseCategories CourseCategory[]
+
+  @@map("categories")
+}
+
+model CourseCategory {
+  courseId   BigInt
+  categoryId BigInt
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_categories_categoryId_foreign")
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "course_categories_courseId_foreign")
+
+  @@id([categoryId, courseId])
+  @@map("course_categories")
+}
+
+model Course {
+  id               BigInt           @id @default(autoincrement())
+  title            String           @db.VarChar(255)
+  slug             String           @db.VarChar(255)
+  description      String?          @db.Text
+  createdAt        DateTime         @default(now())
+  courseCategories CourseCategory[]
+  userCourses      UserCourse[]
+  courseSections   CourseSection[]
+  courseReviews    CourseReview[]
+
+  @@map("courses")
+}
+
+model CourseSection {
+  id                 BigInt              @id @default(autoincrement())
+  order              Int?                @db.UnsignedTinyInt
+  courseId           BigInt
+  title              String              @db.VarChar(255)
+  summarization      String              @db.VarChar(255)
+  course             Course              @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "course_sections_courseId_foreign")
+  type               Int                 @db.UnsignedTinyInt
+  question           Question?
+  lecture            Lecture?
+  userCourseSections UserCourseSection[]
+
+  @@index([courseId], map: "course_sections_courseId_idx")
+  @@map("course_sections")
+}
+
+model CourseReview {
+  id       BigInt   @id @default(autoincrement())
+  userId   BigInt
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "course_reviews_userId_foreign")
+  courseId BigInt
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "course_reviews_courseId_foreign")
+  rating   Int      @db.UnsignedTinyInt @default(0)
+  review   String?  @db.Text
+  title    String?  @db.Text
+  createAt DateTime @default(now())
+
+  @@index([courseId], map: "course_reviews_courseId_idx")
+  @@index([userId], map: "course_reviews_userId_idx")
+  @@map("course_reviews")
+}
+
+model Notification {
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt
+  title     String?   @db.VarChar(45)
+  message   String?   @db.VarChar(255)
+  readAt    DateTime? @db.DateTime()
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "notifications_userId_foreign")
+
+  @@index([userId], map: "notifications_userId_idx")
+  @@map("notifications")
+}
+
+model Question {
+  id                  BigInt               @id @default(autoincrement())
+  courseSectionId     BigInt               @unique(map: "courseSectionId_unique")
+  type                Int                  @db.TinyInt() @default(0)
+  prompt              String               @db.Text
+  keys                String               @db.VarChar(100)
+  keysExplanation     String?              @db.TinyText
+  options             String?              @db.Text
+  courseSection       CourseSection        @relation(fields: [courseSectionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "questions_courseSectionId_foreign")
+  userQuestionAnswers UserQuestionAnswer[] @ignore
+
+  @@index([id], map: "questions_id_idx")
+  @@index([courseSectionId], map: "questions_courseSectionId_idx")
+  @@map("questions")
+}
+
+model Lecture {
+  id              BigInt        @id @default(autoincrement())
+  courseSectionId BigInt        @unique(map: "courseSectionId_unique")
+  content         String        @db.LongText
+  courseSection   CourseSection @relation(fields: [courseSectionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "lectures_courseSectionId_foreign")
+
+  @@index([id], map: "lectures_id_idx")
+  @@index([courseSectionId], map: "lectures_courseSectionId_idx")
+  @@map("lectures")
+}
+
+model UserCourse {
+  id                 BigInt              @id @default(autoincrement())
+  userId             BigInt
+  courseId           BigInt
+  status             Int                 @db.TinyInt @default(0)
+  course             Course              @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_courses_courseId_foreign")
+  user               User                @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_courses_userId_foreign")
+  isBookmarked       Boolean?
+  isRegistered       Boolean?
+  userCourseSections UserCourseSection[]
+
+  @@index([courseId], map: "user_courses_courseId_idx")
+  @@index([userId], map: "user_courses_userId_idx")
+  @@map("user_courses")
+}
+
+model UserCourseSection {
+  id              BigInt        @id @default(autoincrement())
+  userCourseId    BigInt
+  userCourse      UserCourse    @relation(fields: [userCourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_course_sections_userCourseId_foreign")
+  courseSectionId BigInt
+  courseSection   CourseSection @relation(fields: [courseSectionId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_course_sections_courseId_foreign")
+  isCompleted     Boolean       @default(false)
+
+  @@index([userCourseId], map: "user_course_sections_userCourseId_idx")
+  @@index([courseSectionId], map: "user_course_sections_courseSectionId_idx")
+  @@map("user_course_sections")
+}
+
+model UserQuestionAnswer {
+  id         BigInt   @id @default(autoincrement())
+  userId     BigInt
+  questionId BigInt
+  isCorrect  Boolean
+  answer     String?  @db.VarChar(100)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_questions_questionId_foreign")
+  user       User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_questions_userId_foreign")
+
+  @@index([questionId], map: "user_questions_questionId_idx")
+  @@index([userId], map: "user_questions_userId_idx")
+  @@map("user_questions")
+}
+
+model User {
+  id              BigInt               @id @default(autoincrement())
+  name            String               @db.VarChar(255)
+  email           String               @unique(map: "email_unique") @db.VarChar(255)
+  emailVerifiedAt DateTime?            @db.DateTime(0)
+  phone           String?              @db.VarChar(45)
+  password        String?              @db.VarChar(255)
+  rememberToken   String?              @db.VarChar(100)
+  notifications   Notification[]
+  userCourses     UserCourse[]
+  userQuestions   UserQuestionAnswer[] @ignore
+  courseReivews   CourseReview[]
+
+  @@map("users")
+}

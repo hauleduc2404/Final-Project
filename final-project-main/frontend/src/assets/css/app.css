@@ -1,0 +1,63 @@
+:root {
+    --primary-nav-height: 4rem;
+    --hat-nav-height: 2rem;
+    --top-nav-height: calc(var(--primary-nav-height));
+    --bs-border-color-translucent: rgb(224, 224, 224);
+}
+
+@media screen and (max-width: 576px) {
+    :root {
+        --primary-nav-height: 3.75rem;
+        --hat-nav-height: 0rem;
+    }
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/*a {*/
+/*    color: inherit;*/
+/*    text-decoration: inherit;*/
+/*}*/
+
+.fw-medium {
+    font-weight: 500;
+}
+
+html, body {
+    font-family: 'Roboto', sans-serif !important;
+
+}
+
+.font-monospace {
+    font-family: 'Roboto Mono', monospace !important;
+}
+
+.highlight-border-on-hover:hover {
+    cursor: pointer;
+    border-color: var(--bs-primary) !important;
+}
+
+.highlight-border-on-hover {
+    transition: all 0.2s ease-in-out;
+}
+
+.highlight-on-hover:hover {
+    cursor: pointer;
+    color: var(--bs-primary) !important;
+}
+
+.highlight-on-hover {
+    transition: all 0.2s ease-in-out;
+}
+
+* {
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+}
+
+*::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+

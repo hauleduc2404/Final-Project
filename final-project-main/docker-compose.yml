@@ -1,0 +1,56 @@
+version: "3.4"
+
+services:
+  # VueJS Frontend
+  #  vuejs-frontend:
+  #  image: learn-eng/frontend
+  # NodeJS Backend
+  nodejs-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: nodejs-backend
+    container_name: nodejs-backend
+    env_file: .env
+    networks:
+      - app-network
+    volumes:
+      - ./backend:/home/node/app
+      - node_modules:/home/node/app/node_modules
+    environment: #
+      - DB_USERNAME=$DB_USERNAME
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_HOST=$DB_NAME
+      - DB_NAME=$DB_NAME
+      - PORT=$PORT
+      - SECRET_KEY=$SECRET_KEY
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - mysql-db
+
+  #MySQL Service
+  mysql-db:
+    image: mysql:5.7.22
+    container_name: mysql-db
+    restart: unless-stopped
+    networks:
+      - app-network
+    env_file: .env
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - dbdata:/var/lib/mysql/
+
+networks:
+  app-network:
+    driver: bridge
+volumes:
+  dbdata:
+  node_modules:
